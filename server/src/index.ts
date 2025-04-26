@@ -1,7 +1,9 @@
 import express from "express";
 import z from "zod";
 import * as bcrypt from "bcrypt-ts";
+import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
+import JWT_SECRET from "./config.js";
 const client = new PrismaClient();
 const app = express();
 app.use(express.json());
@@ -30,19 +32,63 @@ app.post("/signup", async (req, res) => {
   const { username, email, password } = parseData.data;
 
   const hashedPassword = await bcrypt.hash(password, 5);
-  console.log(hashedPassword);
 
-  await client.user.create({
-    data: {
-      username,
-      email,
-      password: hashedPassword,
-    },
-  });
-  res.json({
-    message: "user created successfully",
-  });
-  console.log("reached");
+  try {
+    const user = await client.user.create({
+      data: {
+        username,
+        email,
+        password: hashedPassword,
+      },
+    });
+    console.log("user created");
+    res.json({
+      message: "user created successfully",
+      userId: user.id,
+    });
+  } catch (error) {
+    res.json({
+      message: "user already exists",
+    });
+  }
+});
+
+app.post("/signin", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await client.user.findFirst({
+      where: {
+        email,
+      },
+    });
+    if (!user) {
+      res.json({
+        message: "user not signed up",
+      });
+    } else {
+      const matchPassword = await bcrypt.compare(password, user.password);
+      if (matchPassword) {
+        const token = jwt.sign(
+          {
+            id: user.id.toString(),
+          },
+          JWT_SECRET
+        );
+        res.json({
+          token,
+        });
+      } else {
+        res.json({
+          message: "invalid password",
+        });
+      }
+    }
+  } catch (error) {
+    res.json({
+      message: "server error",
+    });
+  }
 });
 
 const main = () => {
