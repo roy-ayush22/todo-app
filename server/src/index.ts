@@ -4,6 +4,7 @@ import * as bcrypt from "bcrypt-ts";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
 import JWT_SECRET from "./config.js";
+
 const client = new PrismaClient();
 const app = express();
 app.use(express.json());
@@ -89,6 +90,12 @@ app.post("/signin", async (req, res) => {
       message: "server error",
     });
   }
+});
+
+app.get("/user", (req, res) => {
+  res.json({
+    message: "welcome to protected route",
+  });
 });
 
 const main = () => {
