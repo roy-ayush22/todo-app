@@ -93,9 +93,6 @@ app.post("/signin", async (req, res) => {
 });
 
 app.get("/user", (req, res) => {
-  res.json({
-    message: "welcome to protected route",
-  });
 });
 
 const main = () => {
